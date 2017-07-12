@@ -209,20 +209,20 @@ public final class VariantCaller {
                 
                 switch (c) {
                 case VAR1:
-                    out1.addAlignment(read);
+                    out1.writeSamRecord(read);
                     gt1Count++;
                     break;
                 case VAR2:
-                    out2.addAlignment(read);
+                    out2.writeSamRecord(read);
                     gt2Count++;
                     break;
                 case CONF:
-                    outConf.addAlignment(read);
+                    outConf.writeSamRecord(read);
                     confCount++;
                     break;
                 default:
                     ambgCount++;
-                    outAmbg.addAlignment(read);
+                    outAmbg.writeSamRecord(read);
                 }
                 if (++totalCount % PROGRESS_DENOMINATOR == 0) {
                     LOGGER.info("Processing read " + totalCount + ".");
@@ -281,6 +281,7 @@ public final class VariantCaller {
         String gtString1 = gt1.getGenotypeString();
         String gtString2 = gt2.getGenotypeString();
         
+        // Not sure how to deal with genotype strings longer than 3
         if (gtString1.length() != 3 || gtString2.length() != 3) {
             return Classification.AMBG;
         }
@@ -296,11 +297,10 @@ public final class VariantCaller {
         Base base1 = Base.of(gtString1.charAt(0));
         Base base2 = Base.of(gtString2.charAt(0));
         
-        @SuppressWarnings("deprecation")
-        String chr = diffChromNotation
-                ? translate(snp.getChr())
-                : snp.getChr();
-        Base b = read.getReadBaseFromReferencePosition(chr, snp.getStart());
+        // This case should have been caught when comparing genotypes
+        assert !base1.equals(base2);
+
+        Base b = read.getReadBaseFromReferencePosition(snp.getStart());
         
         if (b.equals(base1)) {
             return Classification.VAR1;
@@ -315,12 +315,12 @@ public final class VariantCaller {
      * Translates between chromosome notations.
      * <p>
      * Converts "chr1" to "1" and vice versa. The only exception is the pair
-     * "chrM" and "MT", which map to each other.
+     * "chrM" and "MT", which map to one another.
      */
     private String translate(String chr) {
         String rtrn = null;
         try {
-            rtrn = ChromosomeName.TRANSLATE.get(chr);
+            rtrn = ChromosomeName.MAPPING.get(chr);
             if (chr == null) {
                 throw new NoSuchElementException("Chromosome " + chr +
                         " not found in the lookup table.");
@@ -334,11 +334,12 @@ public final class VariantCaller {
     
     /**
      * An enumeration of how to classify a read given a SNP
-     * <p>
+     * <ul>
      * <li>VAR1: belongs to genotype 1
      * <li>VAR2: belongs to genotype 2
      * <li>AMBG: no difference between either genotype
      * <li>CONF: conflicting, contains SNPs from both genotypes
+     * </ul>
      */
     private enum Classification {
         VAR1() {
