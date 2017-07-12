@@ -32,7 +32,7 @@ import htsjdk.variant.variantcontext.Genotype;
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.vcf.VCFFileReader;
 
-public final class VariantCaller {
+public final class AlleleCaller {
 
     private Path inputVcfPath;
     private Path inputBamPath;
@@ -59,20 +59,20 @@ public final class VariantCaller {
             "versa. (An exception is made for \"chrM\"-to-\"MT\".)";
     
     private static final Logger LOGGER =
-            Logger.getLogger(VariantCaller.class.getName());
+            Logger.getLogger(AlleleCaller.class.getName());
     
     public static void main(String[] args) throws IOException {
-        (new VariantCaller())
+        (new AlleleCaller())
             .parseArgs(args)
             .run()
             .logOutput();
     }
     
-    private VariantCaller() {
+    private AlleleCaller() {
         LOGGER.setLevel(Level.INFO);
     }
     
-    private VariantCaller parseArgs(String[] args) {
+    private AlleleCaller parseArgs(String[] args) {
         Options options = new Options();
 
         options.addOption(Option.builder()
@@ -190,7 +190,7 @@ public final class VariantCaller {
                 opts, footer, true);
     }
     
-    private VariantCaller run() {
+    private AlleleCaller run() {
 
         CoordinateSpace header = new CoordinateSpace(inputBamPath);
         
